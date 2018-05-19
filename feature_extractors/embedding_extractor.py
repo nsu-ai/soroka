@@ -20,6 +20,7 @@ class EmbeddingExtractor(BaseEstimator, TransformerMixin):
         self.check_X(X)
         self.word2vec_ = gensim.models.KeyedVectors.load_word2vec_format(self.word2vec_name, binary=True,
                                                                          unicode_errors='ignore')
+        self.word2vec_.init_sims(replace=True)
         self.size_ = len(self.word2vec_[list(self.word2vec_.vocab.keys())[0]])
         lengths = [len(self.tokenizer(sentence)) for sentence in X]
         self.max_sentence_length_ = int(np.mean(lengths) + np.std(lengths))
@@ -27,7 +28,7 @@ class EmbeddingExtractor(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         self.check_X(X)
-        check_is_fitted(self, ['max_sentence_length_'])
+        check_is_fitted(self, ['max_sentence_length_', 'size_', 'word2vec_'])
         result = np.zeros((len(X), 1, self.max_sentence_length_, self.size_ + 1), dtype=np.float32)
         for line_number, line in enumerate(X):
             for word_number, word in enumerate(self.tokenizer(line.lower() if self.lowercase else line)):
