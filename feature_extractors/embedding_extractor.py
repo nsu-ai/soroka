@@ -86,8 +86,5 @@ if __name__ == '__main__':
         model_name = os.path.join(os.path.dirname(__file__), '..', 'data', 'word2vec_small.w2v')
         model_url = 'http://panchenko.me/data/dsl-backup/w2v-ru/all.norm-sz100-w10-cb0-it1-min100.w2v'
 
-    import urllib.request
-    import shutil
-
-    with urllib.request.urlopen(model_url) as response, open(model_name, 'wb') as model_fp:
-        shutil.copyfileobj(response, model_fp)
+    import wget
+    wget.download(url=model_url, out=model_name, bar=wget.bar_adaptive)

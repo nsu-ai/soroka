@@ -4,8 +4,7 @@ import unittest
 
 import gensim
 import numpy as np
-import shutil
-import urllib.request
+import wget
 
 from feature_extractors import EmbeddingExtractor
 from sklearn.exceptions import NotFittedError
@@ -16,8 +15,7 @@ class TestEmbeddingExtractor(unittest.TestCase):
         self.model_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'word2vec_small.w2v')
         if not os.path.isfile(self.model_path):
             model_url = 'http://panchenko.me/data/dsl-backup/w2v-ru/all.norm-sz100-w10-cb0-it1-min100.w2v'
-            with urllib.request.urlopen(model_url) as response, open(self.model_path, 'wb') as model_fp:
-                shutil.copyfileobj(response, model_fp)
+            wget.download(url=model_url, out=self.model_path)
         self.tmp_extractor_name = os.path.join(os.path.dirname(__file__), 'testdata', 'tmp_w2v_extractor.pkl')
         self.fe = EmbeddingExtractor(word2vec_name=self.model_path, lowercase=True)
     
