@@ -2,7 +2,7 @@ from collections import OrderedDict
 from typing import List
 
 
-class Crawler:
+class CrawlerExample:
     """ Класс анализирует текстовый контент веб-страниц, начиная с заданного списка URL-ов, и бьёт его на абзацы.
 
     """
