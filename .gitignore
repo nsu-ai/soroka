@@ -3,3 +3,4 @@ __pycache__
 build
 dist
 slcs_ner.egg-info
+*.tmp
