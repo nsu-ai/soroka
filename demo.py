@@ -21,18 +21,14 @@ if __name__ == '__main__':
 
     print('')
     print('Мы парсим следующие сайты:')
+    for it in sorted(urls):
+        print('  {0}'.format(it))
     print('')
     crawler = Crawler()
     full_content = crawler.load_and_tokenize(urls, depth=2)
     if len(full_content) == 0:
         print('По заданным веб-ссылкам ничего не написано :-(')
     else:
-        for it in full_content:
-            print(it)
-            print('')
-            for cur_text in full_content[it]:
-                print('  {0}'.format(cur_text))
-            print('')
         ner = SpacyNamedEntityRecognizer()
         print('Мы находим, упоминается ли {0} в текстах на этих сайтах...'.format(name))
         print('')

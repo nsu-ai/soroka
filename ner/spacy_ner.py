@@ -41,7 +41,7 @@ class SpacyNamedEntityRecognizer(object):
         :return тот же самый словарь, что и web_content, только отфильтрованный.
 
         """
-        nlp = spacy.load('xx_ent_wiki_sm')
+        nlp = spacy.load('xx_ent_wiki_sm', disable=['parser', 'tagger'])
         morph = pymorphy2.MorphAnalyzer()
         for url in list(web_content.keys()):
             url_fl = 0
