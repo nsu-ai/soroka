@@ -23,7 +23,7 @@ if __name__ == '__main__':
     assert len(name) > 0, "List of URLs is empty!"
 
     print('')
-    print('Мы парсим следующие сайты:')
+    print('Сорока летает по следующим сайтам:')
     for it in sorted(urls):
         print('  {0}'.format(it))
     print('')
@@ -33,16 +33,14 @@ if __name__ == '__main__':
         print('По заданным веб-ссылкам ничего не написано :-(')
     else:
         ner = SpacyNamedEntityRecognizer()
-        print('Мы находим, упоминается ли {0} в текстах на этих сайтах...'.format(name))
+        print('Сорока ищет, упоминается ли {0} в текстах на этих сайтах...'.format(name))
         print('')
         content_about_name = ner.filter_content(who=name, is_person=is_person, web_content=full_content)
         if len(content_about_name) == 0:
             if is_person:
-                print('Мы перелопатили весь текст по ссылкам, но никто не знает, что это за '
-                      'человек - {0} :('.format(name))
+                print('Сорока обыскалась везде, но никто не знает, что это за человек - {0} :('.format(name))
             else:
-                print('Мы перелопатили весь текст по ссылкам, но никто не знает, что это за '
-                      'организация - {0} :('.format(name))
+                print('Сорока обыскалась везде, но никто не знает, что это за организация - {0} :('.format(name))
         else:
             if use_spacy_for_sentiment_analysis:
                 from sentiment_analyzer.spacy_sentiment_analyzer import SentimentAnalyzer
@@ -59,7 +57,7 @@ if __name__ == '__main__':
                     cls = pickle.load(cls_fp)
                 se = SentimentAnalyzer(feature_extractor=fe, classifier=cls)
                 print('')
-            print('Мы оцениваем эмоциональность этих упоминаний...')
+            print('Сорока оценивает эмоциональность этих упоминаний...')
             print('')
             negatives_number, neutral_numbers, positives_number = se.analyze(content_about_name)
             n = negatives_number + neutral_numbers + positives_number
@@ -67,30 +65,33 @@ if __name__ == '__main__':
             if n_as_str[-1] in {'2', '3', '4'}:
                 if len(n_as_str) > 1:
                     if n_as_str[-2] == '1':
-                        print('{0} упоминается в тексте {1} раз:'.format(name, n))
+                        print('{0} упоминается в тексте {1} раз.'.format(name, n))
                     else:
-                        print('{0} упоминается в тексте {1} раза:'.format(name, n))
+                        print('{0} упоминается в тексте {1} раза.'.format(name, n))
                 else:
-                    print('{0} упоминается в тексте {1} раза:'.format(name, n))
+                    print('{0} упоминается в тексте {1} раза.'.format(name, n))
             else:
-                print('{0} упоминается в тексте {1} раз:'.format(name, n))
+                print('{0} упоминается в тексте {1} раз.'.format(name, n))
             print('')
-            print('{0:.2%} отрицательных упоминаний;'.format(negatives_number / float(n)))
-            print('{0:.2%} положительных упоминаний;'.format(positives_number / float(n)))
-            print('{0:.2%} нейтральных упоминаний.'.format(neutral_numbers / float(n)))
+            print('Коэффициент сороки:')
+            print('  {0:.2%} отрицательных упоминаний;'.format(negatives_number / float(n)))
+            print('  {0:.2%} положительных упоминаний;'.format(positives_number / float(n)))
+            print('  {0:.2%} нейтральных упоминаний.'.format(neutral_numbers / float(n)))
             print('')
             if (positives_number > 0) and (negatives_number > 0):
                 if (negatives_number - positives_number) / float(n) >= 0.1:
-                    print('{0} вызывает много отрицательных эмоций. Нужно поработать над репутацией.'.format(name))
+                    print('Сорока узнала, что {0} вызывает много отрицательных эмоций. Нужно поработать над '
+                          'репутацией.'.format(name))
                 elif (positives_number - negatives_number) / float(n) >= 0.1:
-                    print('{0} приносит много радости людям. Так держать!'.format(name))
+                    print('Сорока узнала, что {0} приносит много радости людям. Так держать!'.format(name))
                 else:
-                    print('{0} вызывает неоднозначные эмоции. Вы всегда можете перевесить общественное мнение '
-                          'на свою сторону.'.format(name))
+                    print('Сорока узнала, что {0} вызывает неоднозначные эмоции. Вы всегда можете перевесить '
+                          'общественное мнение на свою сторону.'.format(name))
             else:
                 if positives_number > 0:
-                    print('{0} приносит много радости людям. Так держать!'.format(name))
+                    print('Сорока узнала, что {0} приносит много радости людям. Так держать!'.format(name))
                 elif negatives_number > 0:
-                    print('{0} вызывает много отрицательных эмоций. Нужно поработать над репутацией.'.format(name))
+                    print('Сорока узнала, что {0} вызывает много отрицательных эмоций. Нужно поработать над '
+                          'репутацией.'.format(name))
                 else:
-                    print('{0} не вызывает эмоций. Заявите о себе!'.format(name))
+                    print('Сорока узнала, что {0} не вызывает эмоций. Заявите о себе!'.format(name))
