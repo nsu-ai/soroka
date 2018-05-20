@@ -58,11 +58,22 @@ if __name__ == '__main__':
                 with open(cls_name, 'rb') as cls_fp:
                     cls = pickle.load(cls_fp)
                 se = SentimentAnalyzer(feature_extractor=fe, classifier=cls)
+                print('')
             print('Мы оцениваем эмоциональность этих упоминаний...')
             print('')
             negatives_number, neutral_numbers, positives_number = se.analyze(content_about_name)
             n = negatives_number + neutral_numbers + positives_number
-            print('{0} упоминается в тексте {1} раз:'.format(name, n))
+            n_as_str = str(n)
+            if n_as_str[-1] in {'2', '3', '4'}:
+                if len(n_as_str) > 1:
+                    if n_as_str[-2] == '1':
+                        print('{0} упоминается в тексте {1} раз:'.format(name, n))
+                    else:
+                        print('{0} упоминается в тексте {1} раза:'.format(name, n))
+                else:
+                    print('{0} упоминается в тексте {1} раза:'.format(name, n))
+            else:
+                print('{0} упоминается в тексте {1} раз:'.format(name, n))
             print('')
             print('{0:.2%} отрицательных упоминаний;'.format(negatives_number / float(n)))
             print('{0:.2%} положительных упоминаний;'.format(positives_number / float(n)))
