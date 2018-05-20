@@ -2,5 +2,6 @@ gensim
 wget
 beautifulsoup4
 spacy
+pymorphy2
 https://github.com/Theano/Theano/archive/master.zip
 https://github.com/Lasagne/Lasagne/archive/master.zip
