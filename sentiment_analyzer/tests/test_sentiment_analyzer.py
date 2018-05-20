@@ -21,6 +21,8 @@ class TestSentimentAnalyzer(unittest.TestCase):
     def tearDownClass(cls):
         del cls.classifier
         del cls.feature_extractor
+        if os.path.isfile('sent.pkl'):
+            os.remove('sent.pkl')
     
     def test_init_positive01(self):
         sent = SentimentAnalyzer(feature_extractor = self.feature_extractor, classifier = self.classifier)
@@ -48,12 +50,12 @@ class TestSentimentAnalyzer(unittest.TestCase):
         self.assertIsInstance(output[2], int)
         self.assertEqual(output[0] + output[1] + output[2], len_X)
         del sent
-    
+    
     def test_analyze_negative01(self):
         with self.assertRaises(TypeError):
             sent = SentimentAnalyzer(feature_extractor = self.feature_extractor, classifier = self.classifier)
             sent.analyze(1)            
-    
+    
     def test_pickle_unpickle_positive01(self):
         X = OrderedDict({
             'Первый сайт': ['Ваш банк полный ацтой!', 'Ваш магаз — нормас'],
@@ -69,7 +71,6 @@ class TestSentimentAnalyzer(unittest.TestCase):
         output2 = sent.analyze(X)
         self.assertEqual(output1, output2)
         del sent
-        os.remove('sent.pkl')
     
         
 if __name__ == '__main__':

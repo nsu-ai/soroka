@@ -1,0 +1,1 @@
+from sentiment_analyzer.train.train import main as train
