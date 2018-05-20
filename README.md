@@ -43,10 +43,10 @@ python3 -m spacy download xx_ent_wiki_sm
 сущность этого объекта (человек или организация) и ссылки на интересующие интернет-сайты.
 
 К примеру, поиск информации о Сергее Шнурове на lenta.ru в рубрике о культуре выглядел бы так:
-' python -u demo.py --name "Сергей Шнуров" --who person --url https://lenta.ru/rubrics/culture/ '
+` python -u demo.py --name "Сергей Шнуров" --who person --url https://lenta.ru/rubrics/culture/ `
 
 Поиск информации об организации "Soroka" на сайте vk.com выглядит так:
-' python -u demo.py --name "Soroka" --who organization --url https://vk.com/ '
+` python -u demo.py --name "Soroka" --who organization --url https://vk.com/ `
 
 На выход модель выдаст следующие данные:
 - Сколько раз на сайте упоминается искомый объект
