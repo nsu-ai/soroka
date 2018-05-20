@@ -53,12 +53,13 @@ class SpacyNamedEntityRecognizer(object):
                 for ent in doc.ents:
                     #print(ent, ent.label_, type(ent.label_))
                     if is_person:
+                        for unit in who.split():
                         #print('Is person')
-                        if ent.label_ == 'PER':
+                            if ent.label_ == 'PER':
                             #print(ent.text, who)
-                            if morph.parse(ent.text.lower())[0].normal_form == morph.parse(who.lower())[0].normal_form:
-                                doc_fl += 1
-                                url_fl += 1
+                                if morph.parse(ent.text.lower())[0].normal_form == morph.parse(unit.lower())[0].normal_form:
+                                    doc_fl += 1
+                                    url_fl += 1
                     else:
                         #print('Not person')
                         if ent.label_ == 'ORG' or ent.label_== 'LOC':
