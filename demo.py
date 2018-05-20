@@ -64,9 +64,9 @@ if __name__ == '__main__':
             n = negatives_number + neutral_numbers + positives_number
             print('{0} упоминается в тексте {1} раз:'.format(name, n))
             print('')
-            print('{0.2%} отрицательных упоминаний;'.format(negatives_number / float(n)))
-            print('{0.2%} положительных упоминаний;'.format(positives_number / float(n)))
-            print('{0.2%} нейтральных упоминаний.'.format(neutral_numbers / float(n)))
+            print('{0:.2%} отрицательных упоминаний;'.format(negatives_number / float(n)))
+            print('{0:.2%} положительных упоминаний;'.format(positives_number / float(n)))
+            print('{0:.2%} нейтральных упоминаний.'.format(neutral_numbers / float(n)))
             print('')
             if (negatives_number - positives_number) >= 10:
                 print('{0} вызывает много отрицательных эмоций. Нужно поработать над репутацией.'.format(name))
