@@ -12,7 +12,7 @@ class TestExtractor(unittest.TestCase):
         res = my_crawler.load_and_tokenize([site_to_check], depth=1)
         # print(res)
         # check number of paragraphs
-        self.assertEqual(len(res[site_to_check]), 63)
+        self.assertEqual(len(res[site_to_check]), 244)
 
     def test_init_positive02(self):
         my_crawler = Crawler01()

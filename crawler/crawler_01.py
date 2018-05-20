@@ -5,6 +5,7 @@ from urllib.parse import urlsplit
 # from googlesearch import search
 from requests import get
 from bs4 import BeautifulSoup
+from bs4.element import Comment
 
 from crawler.crawler import Crawler
 
@@ -52,6 +53,25 @@ class Crawler01(Crawler):
 
     @staticmethod
     def get_paragraphs(html_soup):
+        # https://stackoverflow.com/questions/1936466/beautifulsoup-grab-visible-webpage-text
+        def tag_visible(element):
+            if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
+                return False
+            if isinstance(element, Comment):
+                return False
+            return True
+
+        texts = html_soup.findAll(text=True)
+        visible_texts = filter(tag_visible, texts)
+        # return u" ".join(t.strip() for t in visible_texts)
+        visible_texts = [v.strip() for v in visible_texts if len(v.strip()) > 10]
+        # for v in visible_texts:
+        #     print('++++++++++++++++++++++++')
+        #     print(v)
+        return list(visible_texts)
+
+    @staticmethod
+    def get_paragraphs_old(html_soup):
         paragraphs = []
         for p in html_soup.find_all('p'):
             txt = p.getText().strip()
