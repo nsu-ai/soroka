@@ -46,7 +46,7 @@ class SentimentAnalyzer(object):
         if not isinstance(web_content, OrderedDict):
             raise TypeError("web_content must be an OrderedDict,"
                             " but it is a {type}".format(type = type(web_content)))
-        X_preprocessed = self.feature_extractor.fit_transform(sum([web_content[key] for key in web_content], []))
+        X_preprocessed = self.feature_extractor.transform(sum([web_content[key] for key in web_content], []))
         output = self.classifier.predict(X_preprocessed)
         positives = int(sum(output == 2))
         neutrals = int(sum(output == 1))
