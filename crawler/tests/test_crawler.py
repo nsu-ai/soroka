@@ -1,4 +1,4 @@
-from crawler.crawler_01 import Crawler01
+from crawler.crawler import Crawler
 import unittest
 
 
@@ -7,7 +7,7 @@ class TestExtractor(unittest.TestCase):
         pass
 
     def test_init_positive01(self):
-        my_crawler = Crawler01()
+        my_crawler = Crawler()
         site_to_check = 'http://zabaykin.ru'
         res = my_crawler.load_and_tokenize([site_to_check], depth=1)
         # print(res)
@@ -15,7 +15,7 @@ class TestExtractor(unittest.TestCase):
         self.assertEqual(len(res[site_to_check]), 244)
 
     def test_init_positive02(self):
-        my_crawler = Crawler01()
+        my_crawler = Crawler()
         site_to_check = 'http://zabaykin.ru/?p=505'
         res = my_crawler.load_and_tokenize([site_to_check], depth=2)
         # print(res)
