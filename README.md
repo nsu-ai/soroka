@@ -37,16 +37,19 @@
 
 Перед использованием убедитесь, что все пакеты, перечисленные в файле requirements.txt установлены в вашем окружении.
 Кроме того, требуется скачать предобученную модель spacy xx_ent_wiki_sm. Сделать это можно с помощью команды:
-python3 -m spacy download xx_ent_wiki_sm
+
+`python3 -m spacy download xx_ent_wiki_sm`
 
 Модель доступна для использования с помощью интерфейса командной строки. Вам нужно указать имя/название объекта для поиска,
 сущность этого объекта (человек или организация) и ссылки на интересующие интернет-сайты.
 
 К примеру, поиск информации о Сергее Шнурове на lenta.ru в рубрике о культуре выглядел бы так:
-` python -u demo.py --name "Сергей Шнуров" --who person --url https://lenta.ru/rubrics/culture/ `
+
+`python -u demo.py --name "Сергей Шнуров" --who person --url https://lenta.ru/rubrics/culture/`
 
 Поиск информации об организации "Soroka" на сайте vk.com выглядит так:
-` python -u demo.py --name "Soroka" --who organization --url https://vk.com/ `
+
+`python -u demo.py --name "Soroka" --who organization --url https://vk.com/`
 
 На выход модель выдаст следующие данные:
 - Сколько раз на сайте упоминается искомый объект
