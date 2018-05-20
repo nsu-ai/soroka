@@ -45,10 +45,11 @@ if __name__ == '__main__':
                 from sentiment_analyzer.spacy_sentiment_analyzer import SentimentAnalyzer
                 se = SentimentAnalyzer()
             else:
+                import os
                 import pickle
                 from sentiment_analyzer.sentiment_analyzer import SentimentAnalyzer
-                fe_name = ''
-                cls_name = ''
+                fe_name = os.path.join('data', 'senti_feature_extractor.pkl')
+                cls_name = os.path.join('data', 'senti_cnn_classifier.pkl')
                 with open(fe_name, 'rb') as fe_fp:
                     fe = pickle.load(fe_fp)
                 with open(cls_name, 'rb') as cls_fp:
