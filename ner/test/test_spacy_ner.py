@@ -11,7 +11,7 @@ class TestSpacyNer(unittest.TestCase):
         test_content = {'url1': ['Наташа помогла Андрею с домашней работой. Наташа хороший человек.', 'Она большая молодец'], 'url2': ['Сегодня день рождения Алексеевой, поздравим ее']}
         nr = SpacyNamedEntityRecognizer()
         content_to_transform = copy.deepcopy(test_content)
-        res = nr.filter_content('Наташа', True, content_to_transform)
+        res = nr.filter_content('Наташа Надеина', True, content_to_transform)
         print('RES', res)
         del test_content['url1'][1]
         del test_content['url2']
