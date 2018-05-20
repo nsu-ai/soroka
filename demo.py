@@ -68,12 +68,18 @@ if __name__ == '__main__':
             print('{0:.2%} положительных упоминаний;'.format(positives_number / float(n)))
             print('{0:.2%} нейтральных упоминаний.'.format(neutral_numbers / float(n)))
             print('')
-            if (negatives_number - positives_number) >= 10:
-                print('{0} вызывает много отрицательных эмоций. Нужно поработать над репутацией.'.format(name))
-            elif (positives_number - negatives_number) >= 10:
-                print('{0} приносит много радости людям. Так держать!'.format(name))
-            elif (positives_number > 0) or (negatives_number > 0):
-                print('{0} вызывает неоднозначные эмоции. Вы всегда можете перевесить общественное мнение '
-                      'на свою сторону.'.format(name))
+            if (positives_number > 0) and (negatives_number > 0):
+                if (negatives_number - positives_number) / float(n) >= 0.1:
+                    print('{0} вызывает много отрицательных эмоций. Нужно поработать над репутацией.'.format(name))
+                elif (positives_number - negatives_number) / float(n) >= 0.1:
+                    print('{0} приносит много радости людям. Так держать!'.format(name))
+                else:
+                    print('{0} вызывает неоднозначные эмоции. Вы всегда можете перевесить общественное мнение '
+                          'на свою сторону.'.format(name))
             else:
-                print('{0} не вызывает эмоций. Заявите о себе!'.format(name))
+                if positives_number > 0:
+                    print('{0} приносит много радости людям. Так держать!'.format(name))
+                elif negatives_number > 0:
+                    print('{0} вызывает много отрицательных эмоций. Нужно поработать над репутацией.'.format(name))
+                else:
+                    print('{0} не вызывает эмоций. Заявите о себе!'.format(name))
