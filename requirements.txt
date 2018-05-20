@@ -1,4 +1,5 @@
 gensim
 wget
+beautifulsoup4
 https://github.com/Theano/Theano/archive/master.zip
 https://github.com/Lasagne/Lasagne/archive/master.zip
