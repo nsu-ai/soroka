@@ -10,8 +10,11 @@ if __name__ == '__main__':
     parser.add_argument('-w', '--who', dest='who', type=str, choices=['person', 'organization'],
                         default='person', help='Who has to be found: person or organization?')
     parser.add_argument('-u', '--url', dest='URL', type=str, required=True, help='List of URLs divided by a semicolon.')
+    parser.add_argument('--sentiment', dest='sentiment_analyzer', type=str, choices=['spacy', 'own'], required=False,
+                        default='own',
+                        help='What library has to be base for a sentiment analyzer: the spaCy or own CNN?')
     args = parser.parse_args()
-    use_spacy_for_sentiment_analysys = False
+    use_spacy_for_sentiment_analysis = (args.sentiment_analyzer == 'spacy')
 
     name = args.name.strip()
     assert len(name) > 0, "Name of person or organization is empty!"
@@ -41,7 +44,7 @@ if __name__ == '__main__':
                 print('Мы перелопатили весь текст по ссылкам, но никто не знает, что это за '
                       'организация - {0} :('.format(name))
         else:
-            if use_spacy_for_sentiment_analysys:
+            if use_spacy_for_sentiment_analysis:
                 from sentiment_analyzer.spacy_sentiment_analyzer import SentimentAnalyzer
                 se = SentimentAnalyzer()
             else:
