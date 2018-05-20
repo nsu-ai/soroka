@@ -2,7 +2,6 @@ from argparse import ArgumentParser
 
 from crawler.crawler import Crawler
 from ner.spacy_ner import SpacyNamedEntityRecognizer
-from sentiment_analyzer.spacy_sentiment_analyzer import SentimentAnalyzer
 
 
 if __name__ == '__main__':
@@ -12,6 +11,7 @@ if __name__ == '__main__':
                         default='person', help='Who has to be found: person or organization?')
     parser.add_argument('-u', '--url', dest='URL', type=str, required=True, help='List of URLs divided by a semicolon.')
     args = parser.parse_args()
+    use_spacy_for_sentiment_analysys = False
 
     name = args.name.strip()
     assert len(name) > 0, "Name of person or organization is empty!"
@@ -41,7 +41,19 @@ if __name__ == '__main__':
                 print('Мы перелопатили весь текст по ссылкам, но никто не знает, что это за '
                       'организация - {0} :('.format(name))
         else:
-            se = SentimentAnalyzer()
+            if use_spacy_for_sentiment_analysys:
+                from sentiment_analyzer.spacy_sentiment_analyzer import SentimentAnalyzer
+                se = SentimentAnalyzer()
+            else:
+                import pickle
+                from sentiment_analyzer.sentiment_analyzer import SentimentAnalyzer
+                fe_name = ''
+                cls_name = ''
+                with open(fe_name, 'rb') as fe_fp:
+                    fe = pickle.load(fe_fp)
+                with open(cls_name, 'rb') as cls_fp:
+                    cls = pickle.load(cls_fp)
+                se = SentimentAnalyzer(feature_extractor=fe, classifier=cls)
             print('Мы оцениваем эмоциональность этих упоминаний...')
             print('')
             negatives_number, neutral_numbers, positives_number = se.analyze(content_about_name)

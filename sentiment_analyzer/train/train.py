@@ -8,9 +8,10 @@ from feature_extractors import EmbeddingExtractor
 def main(filename_for_training=os.path.join('data', 'train_data_for_se.csv'),
          filename_for_testing=os.path.join('data', 'test_data_for_se.csv'),
          delimiter=',', verbose=True, epochs_before_stopping=10, max_epochs_number=1000,
-         layers={'conv': ((32, (3, 3)), (64, (2, 2))), 'pool': ((2, 2), (2, 2)), 'dense': (100, 80)},
+         layers={'conv': ((32, (3, 0)), (64, (2, 0))), 'pool': ((2, 1), (2, 1)), 'dense': (100,)},
          word2vec=os.path.join('data', 'word2vec_small.w2v'),
-         output=os.path.join('data', 'senti_cnn_classifier.pkl')):
+         fe_output=os.path.join('data', 'senti_feature_extractor.pkl'),
+         cls_output=os.path.join('data', 'senti_cnn_classifier.pkl')):
 
     X_train = list()
     y_train = list()
@@ -46,6 +47,8 @@ def main(filename_for_training=os.path.join('data', 'train_data_for_se.csv'),
     emb = EmbeddingExtractor(word2vec_name=word2vec)
     emb.fit(X_train + X_test)
     print('Feature extractor has been fitted...')
+    with open(fe_output, 'wb') as f:
+        pickle.dump(emb, f)
     X_train_transformed = emb.transform(X_train)
     print('Data for training have been prepared...')
     X_test_transformed = emb.transform(X_test)
@@ -59,7 +62,7 @@ def main(filename_for_training=os.path.join('data', 'train_data_for_se.csv'),
     )
     print('')
     print('Convolutional neural network has been trained...')
-    with open(output, 'wb') as f:
+    with open(cls_output, 'wb') as f:
         pickle.dump(clf, f)
 
 
