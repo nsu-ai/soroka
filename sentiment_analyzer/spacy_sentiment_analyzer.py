@@ -1,6 +1,5 @@
 import operator
-import numpy as np
-
+import os
 from collections import OrderedDict
 from typing import Tuple
 
@@ -10,8 +9,8 @@ import spacy
 class SentimentAnalyzer(object):
     """ Анализатор тональности текстового контента.
     """
-    def __init__(self, feature_extractor, classifier):
-        self.nlp = spacy.load("../data")
+    def __init__(self):
+        self.nlp = spacy.load(os.path.join(os.path.dirname(__file__), '..', 'data'))
 
     def analyze(self, web_content: OrderedDict) -> Tuple[int, int, int]:
         """ Проанализировать тональность абзацев заданного веб-контента. Сам веб-контент представляет собой словарь,
@@ -48,11 +47,3 @@ class SentimentAnalyzer(object):
             results[max(self.nlp(str(v)).cats.items(), key=operator.itemgetter(1))[0]] += 1
 
         return results['NEGATIVE'], results['NEUTRAL'], results['POSITIVE']
-
-    def __getstate__(self):
-        return {'classifier': self.classifier, 'feature_extractor': self.feature_extractor}
-
-    def __setstate__(self, state):
-        self.classifier = state['classifier']
-        self.feature_extractor = state['feature_extractor']
-        return self

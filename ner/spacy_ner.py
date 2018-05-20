@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import copy
 import spacy
 import pymorphy2
 
@@ -44,6 +45,7 @@ class SpacyNamedEntityRecognizer(object):
         morph = pymorphy2.MorphAnalyzer()
         for url in list(web_content.keys()):
             url_fl = 0
+            filtered_content = []
             for i in range(len(web_content[url])):
                 #print(document)
                 doc_fl = 0
@@ -63,8 +65,9 @@ class SpacyNamedEntityRecognizer(object):
                             if morph.parse(ent.text.lower())[0].normal_form == morph.parse(who.lower())[0].normal_form:
                                 doc_fl += 1
                                 url_fl += 1
-                if doc_fl == 0:
-                    del web_content[url][i]
+                if doc_fl != 0:
+                    filtered_content.append(web_content[url][i])
+            web_content[url] = copy.copy(filtered_content)
             if url_fl == 0:
                 del web_content[url]
         return web_content
