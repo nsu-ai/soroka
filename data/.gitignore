@@ -1,3 +1,5 @@
 *.w2v
 *.bin
 *.pkl
+!senti_cnn_classifier.pkl
+!senti_feature_extractor.pkl
