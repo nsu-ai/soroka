@@ -35,8 +35,8 @@ class TestSeqFeatureUnion(unittest.TestCase):
         ])
         X = ['АбвUp 123, 34+2 , рол hj №23 цена 34$', 'Hello , world !', 'Мама мыла раму % папа#2 ( кто это ) ,']
         X_trans_united = feature_union.fit_transform(X)
-        X_trans_1 = self.fe1.transform(X)
-        X_trans_2 = self.fe2.transform(X)
+        X_trans_1 = feature_union.transformer_list[0][1].transform(X)
+        X_trans_2 = feature_union.transformer_list[1][1].transform(X)
         self.assertIsInstance(X_trans_united, np.ndarray)
         self.assertEqual(len(X_trans_united.shape), 4)
         self.assertEqual(X_trans_united.shape[:3], X_trans_1.shape[:3])
@@ -75,7 +75,15 @@ class TestSeqFeatureUnion(unittest.TestCase):
             feature_union2 = pickle.load(f)
         output2 = feature_union2.transform(X)
         del feature_union2
-        self.assertTrue(np.array_equal(output1, output2))
+        EPS = 1e-5
+        self.assertEqual(output1.shape, output2.shape)
+        for text_ind in range(output1.shape[0]):
+            for token_ind in range(output1.shape[2]):
+                for feature_ind in range(output1.shape[3]):
+                    self.assertAlmostEqual(
+                        output1[text_ind, 0, token_ind, feature_ind], output2[text_ind, 0, token_ind, feature_ind],
+                        delta=EPS, msg='Sentence {0}, token {1}, feature {2}'.format(text_ind, token_ind, feature_ind)
+                    )
 
 
 if __name__ == '__main__':

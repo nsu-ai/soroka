@@ -41,11 +41,15 @@ class SeqFeatureUnion(_BaseComposition, TransformerMixin):
         EPS = 1e-6
         X_trans = self.transformer_list[0][1].transform(X)
         self._validate_X(X_trans, 0)
-        for text_ind in range(X_trans.shape[0]):
-            for token_ind in range(X_trans.shape[2]):
-                mask = X_trans[text_ind][0][token_ind][X_trans.shape[3] - 1]
-                for feature_ind in range(X_trans.shape[3] - 1):
-                    X_trans[text_ind][0][token_ind][feature_ind + 1] = X_trans[text_ind][0][token_ind][feature_ind]
+        n_texts = X_trans.shape[0]
+        n_tokens = X_trans.shape[2]
+        embedding_size = X_trans.shape[3] - 1
+        for text_ind in range(n_texts):
+            for token_ind in range(n_tokens):
+                mask = X_trans[text_ind][0][token_ind][embedding_size]
+                for feature_ind in range(embedding_size):
+                    X_trans[text_ind][0][token_ind][embedding_size - feature_ind] = \
+                        X_trans[text_ind][0][token_ind][embedding_size - feature_ind - 1]
                 X_trans[text_ind][0][token_ind][0] = mask
         for transformer_ind in range(1, len(self.transformer_list)):
             transformer_name = self.transformer_list[transformer_ind][0]
@@ -54,8 +58,8 @@ class SeqFeatureUnion(_BaseComposition, TransformerMixin):
             if X_trans.shape[0:3] != X_trans_.shape[0:3]:
                 raise ValueError('Outputs of transformer "{0}" do not correspond to outputs of previous transformers. '
                                  '{1} != {2}.'.format(transformer_name, X_trans_.shape[0:3], X_trans.shape[0:3]))
-            for text_ind in range(X_trans.shape[0]):
-                for token_ind in range(X_trans.shape[2]):
+            for text_ind in range(n_texts):
+                for token_ind in range(n_tokens):
                     if abs(X_trans[text_ind][0][token_ind][0] - X_trans_[text_ind][0][token_ind][-1]) > EPS:
                         raise ValueError('Outputs of transformer "{0}" do not correspond to outputs of previous '
                                          'transformers. Masks for (text {1}, token {2}) are not equal.'.format(
@@ -73,6 +77,8 @@ class SeqFeatureUnion(_BaseComposition, TransformerMixin):
         if X.shape[1] != 1:
             raise ValueError('Transformer {0} is wrong! '
                              'Second dimension of `X` does not equal to 1.'.format(transformer_ind))
+        if X.shape[3] < 2:
+            raise ValueError('Transformer {0} is wrong! Last dimension of `X` less than 2.'.format(transformer_ind))
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)

@@ -57,8 +57,9 @@ class EmbeddingExtractor(BaseEstimator, TransformerMixin):
             self.size_ = state['size_']
             self.word2vec_ = gensim.models.KeyedVectors.load_word2vec_format(self.word2vec_name, binary=True,
                                                                              unicode_errors='ignore')
+            self.word2vec_.init_sims(replace=True)
         return self
-    
+
     def __getstate__(self):
         result =  {'tokenizer': copy.deepcopy(self.tokenizer), 'word2vec_name': self.word2vec_name,
                    'lowercase': self.lowercase}

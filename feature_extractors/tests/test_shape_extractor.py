@@ -201,7 +201,15 @@ class TestShapeExtractor(unittest.TestCase):
             fe2 = pickle.load(f)
         output2 = fe2.transform(X)
         del fe2
-        self.assertTrue(np.array_equal(output1, output2))
+        EPS = 1e-5
+        self.assertEqual(output1.shape, output2.shape)
+        for text_ind in range(output1.shape[0]):
+            for token_ind in range(output1.shape[2]):
+                for feature_ind in range(output1.shape[3]):
+                    self.assertAlmostEqual(
+                        output1[text_ind, 0, token_ind, feature_ind], output2[text_ind, 0, token_ind, feature_ind],
+                        delta=EPS, msg='Sentence {0}, token {1}, feature {2}'.format(text_ind, token_ind, feature_ind)
+                    )
 
 
 if __name__ == '__main__':
