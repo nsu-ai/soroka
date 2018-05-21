@@ -46,6 +46,34 @@ class EmbeddingExtractor(BaseEstimator, TransformerMixin):
             if len(X.shape) != 1:
                 raise TypeError('X must be a 1-D array, but it is a {shape}-D array'.format(shape=len(X.shape)))
 
+    def __copy__(self):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.tokenizer = copy.copy(self.tokenizer)
+        result.word2vec_name = copy.copy(self.word2vec_name)
+        result.lowercase = self.lowercase
+        if hasattr(self, 'max_sentence_length_'):
+            result.max_sentence_length_ = self.max_sentence_length_
+        if hasattr(self, 'size_'):
+            result.size_ = self.size_
+        if hasattr(self, 'word2vec_'):
+            result.word2vec_ = self.word2vec_
+        return result
+
+    def __deepcopy__(self, memodict={}):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.tokenizer = copy.deepcopy(self.tokenizer)
+        result.word2vec_name = copy.copy(self.word2vec_name)
+        result.lowercase = self.lowercase
+        if hasattr(self, 'max_sentence_length_'):
+            result.max_sentence_length_ = self.max_sentence_length_
+        if hasattr(self, 'size_'):
+            result.size_ = self.size_
+        if hasattr(self, 'word2vec_'):
+            result.word2vec_ = self.word2vec_
+        return result
+
     def __setstate__(self, state):
         self.tokenizer = copy.deepcopy(state['tokenizer'])
         self.word2vec_name = state['word2vec_name']

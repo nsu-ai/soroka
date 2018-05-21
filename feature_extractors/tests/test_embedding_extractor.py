@@ -1,3 +1,4 @@
+import copy
 import os
 import pickle
 import unittest
@@ -89,6 +90,38 @@ class TestEmbeddingExtractor(unittest.TestCase):
             pickle.dump(self.fe, f)
         with open(self.tmp_extractor_name, 'rb') as f:
             fe2 = pickle.load(f)
+        output2 = fe2.transform(X)
+        del fe2
+        EPS = 1e-5
+        self.assertEqual(output1.shape, output2.shape)
+        for text_ind in range(output1.shape[0]):
+            for token_ind in range(output1.shape[2]):
+                for feature_ind in range(output1.shape[3]):
+                    self.assertAlmostEqual(
+                        output1[text_ind, 0, token_ind, feature_ind], output2[text_ind, 0, token_ind, feature_ind],
+                        delta=EPS, msg='Sentence {0}, token {1}, feature {2}'.format(text_ind, token_ind, feature_ind)
+                    )
+
+    def test_copy_positive01(self):
+        X = ['Ваш банк полный ацтой!', 'Ваш магаз — нормас', 'Мне пофиг на ваш ресторан']
+        output1 = self.fe.fit_transform(X)
+        fe2 = copy.copy(self.fe)
+        output2 = fe2.transform(X)
+        del fe2
+        EPS = 1e-5
+        self.assertEqual(output1.shape, output2.shape)
+        for text_ind in range(output1.shape[0]):
+            for token_ind in range(output1.shape[2]):
+                for feature_ind in range(output1.shape[3]):
+                    self.assertAlmostEqual(
+                        output1[text_ind, 0, token_ind, feature_ind], output2[text_ind, 0, token_ind, feature_ind],
+                        delta=EPS, msg='Sentence {0}, token {1}, feature {2}'.format(text_ind, token_ind, feature_ind)
+                    )
+
+    def test_deepcopy_positive01(self):
+        X = ['Ваш банк полный ацтой!', 'Ваш магаз — нормас', 'Мне пофиг на ваш ресторан']
+        output1 = self.fe.fit_transform(X)
+        fe2 = copy.deepcopy(self.fe)
         output2 = fe2.transform(X)
         del fe2
         EPS = 1e-5
