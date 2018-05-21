@@ -1,3 +1,4 @@
+import copy
 from bs4 import BeautifulSoup
 from bs4.element import Comment
 from collections import OrderedDict
@@ -5,11 +6,16 @@ from requests import get
 from typing import List
 from urllib.parse import urlsplit
 
+from nltk import sent_tokenize
+
 
 class Crawler:
     """ Класс анализирует текстовый контент веб-страниц, начиная с заданного списка URL-ов, и бьёт его на абзацы.
 
     """
+    def __init__(self, divide_by_sentences: bool=False):
+        self.divide_by_sentences = divide_by_sentences
+
     def load_and_tokenize(self, urls: List[str], depth: int=3) -> OrderedDict:
         """ Загрузить все веб-страницы по заданным URL-ам и распарсить текстовый контент в них.
 
@@ -68,6 +74,11 @@ class Crawler:
                     paragraphs = self.get_paragraphs(html_soup)
                     out[url_4] = paragraphs
                     urls_depth_5 = self.get_links_on_page(html_soup, base_url=base_url, old_links=out.keys())
+            if self.divide_by_sentences:
+                sentences = []
+                for cur_paragraph in out[url]:
+                    sentences += sent_tokenize(cur_paragraph)
+                out[url] = copy.copy(sentences)
         # for k, el in out.items():
         #     print(k, '!!!')
         #     for e in el:

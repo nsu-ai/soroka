@@ -27,7 +27,7 @@ if __name__ == '__main__':
     for it in sorted(urls):
         print('  {0}'.format(it))
     print('')
-    crawler = Crawler()
+    crawler = Crawler(divide_by_sentences=True)
     full_content = crawler.load_and_tokenize(urls, depth=2)
     if len(full_content) == 0:
         print('По заданным веб-ссылкам ничего не написано :-(')
