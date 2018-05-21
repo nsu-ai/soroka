@@ -42,8 +42,8 @@
 
 `python3 -m spacy download xx_ent_wiki_sm`
 
-Кроме того, один из компонентов системы использует векторные модели слов (word2vec), созданные в рамках проекта Russian Distributional Thesaurus https://nlpub.ru/Russian_Distributional_Thesaurus
-Общий объём памяти, занимаемой этими векторами слов, составляет около половины гигабайта, поэтому мы не стали включать эти данные в коммит.
+Кроме того, один из компонентов системы использует векторные модели слов (word2vec), созданные в рамках проекта Russian Distributional Thesaurus https://nlpub.ru/Russian_Distributional_Thesaurus.
+Общий объём памяти, занимаемый этими векторами слов, составляет около половины гигабайта, поэтому мы не стали включать вектора слов в репозиторий.
 Но их можно выкачать, выполнив следующую команду из корневой директории проекта:
 
 `PYTHONPATH=$PWD python feature_extractors/embedding_extractor.py -d small`
