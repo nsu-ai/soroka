@@ -1,6 +1,7 @@
 import codecs
 import copy
 import csv
+import math
 import os
 import pickle
 import tempfile
@@ -20,7 +21,7 @@ class TestCNNClassifier(unittest.TestCase):
                             batch_size=100)
         emb = EmbeddingExtractor(word2vec_name=os.path.join(os.path.dirname(__file__), '..', '..', 'data',
                                                             'word2vec_small.w2v'))
-        self.text_cnn = TextCNNClassifier(feature_extractor=emb, base_estimator=cnn, batch_size=1000, warm_start=False)
+        self.text_cnn = TextCNNClassifier(feature_extractor=emb, base_estimator=cnn, batch_size=2000, warm_start=False)
         self.texts_for_training, self.labels_for_training = self.load_labeled_texts(
             os.path.join(os.path.dirname(__file__), 'testdata', 'train_data.csv'))
         self.texts_for_testing, self.labels_for_testing = self.load_labeled_texts(
@@ -47,19 +48,19 @@ class TestCNNClassifier(unittest.TestCase):
         self.assertGreater(self.text_cnn.base_estimator.n_iter_, 0)
         self.assertLess(self.text_cnn.base_estimator.n_iter_, max_epochs_number)
         f1 = f1_score(self.labels_for_testing, self.text_cnn.predict(self.texts_for_testing), average='macro')
-        self.assertGreater(f1, 0.6)
+        self.assertGreater(f1, 0.5)
 
     def test_fit_predict_positive02(self):
         max_epochs_number = 5
+        true_n_iter_ = int(math.ceil(len(self.labels_for_training) / self.text_cnn.batch_size)) * max_epochs_number
         self.text_cnn.base_estimator.max_epochs_number = max_epochs_number
         self.text_cnn.base_estimator.epochs_before_stopping = 3
         self.text_cnn.base_estimator.verbose = True
-        print('')
         res = self.text_cnn.fit(self.texts_for_training, self.labels_for_training)
         self.assertIsInstance(res, TextCNNClassifier)
-        self.assertEqual(self.text_cnn.base_estimator.n_iter_, max_epochs_number - 1)
+        self.assertEqual(self.text_cnn.base_estimator.n_iter_, true_n_iter_)
         f1 = f1_score(self.labels_for_testing, self.text_cnn.predict(self.texts_for_testing), average='macro')
-        self.assertGreater(f1, 0.4)
+        self.assertGreater(f1, 0.3)
 
     def test_pickling_unpickling(self):
         max_epochs_number = 5

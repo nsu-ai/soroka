@@ -264,19 +264,20 @@ class TextCNNClassifier(BaseEstimator, ClassifierMixin):
     def __getstate__(self):
         """ Нужно для сериализации через pickle. """
         state = {
-            'textcnn_batch_size': self.batch_size,
-            'textcnn_warm_start': self.warm_start
+            'batch_size': self.batch_size,
+            'warm_start': self.warm_start,
+            'feature_extractor': self.feature_extractor,
+            'base_estimator': self.base_estimator
         }
-        state.update(self.feature_extractor.__getstate__())
-        state.update(self.base_estimator.__getstate__())
+        return state
 
     def __setstate__(self, state):
         """ Нужно для десериализации через pickle. """
-        self.batch_size = state['textcnn_batch_size']
-        self.warm_start = state['textcnn_warm_start']
-        if not hasattr(self, 'base_estimator'):
-            pass
-        if not hasattr(self, 'feature_extractor'):
-            pass
-        self.base_estimator.__setstate__(state)
-        self.feature_extractor.__setstate__(state)
+        self.batch_size = state['batch_size']
+        self.warm_start = state['warm_start']
+        if hasattr(self, 'base_estimator'):
+            del self.base_estimator
+        if hasattr(self, 'feature_extractor'):
+            del self.feature_extractor
+        self.base_estimator = state['base_estimator']
+        self.feature_extractor = state['feature_extractor']
