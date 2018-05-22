@@ -47,7 +47,7 @@ class TestCNNClassifier(unittest.TestCase):
         self.assertGreater(self.text_cnn.base_estimator.n_iter_, 0)
         self.assertLess(self.text_cnn.base_estimator.n_iter_, max_epochs_number)
         f1 = f1_score(self.labels_for_testing, self.text_cnn.predict(self.texts_for_testing), average='macro')
-        self.assertGreater(f1, 0.7)
+        self.assertGreater(f1, 0.6)
 
     def test_fit_predict_positive02(self):
         max_epochs_number = 5
@@ -59,7 +59,7 @@ class TestCNNClassifier(unittest.TestCase):
         self.assertIsInstance(res, TextCNNClassifier)
         self.assertEqual(self.text_cnn.base_estimator.n_iter_, max_epochs_number - 1)
         f1 = f1_score(self.labels_for_testing, self.text_cnn.predict(self.texts_for_testing), average='macro')
-        self.assertGreater(f1, 0.5)
+        self.assertGreater(f1, 0.4)
 
     def test_pickling_unpickling(self):
         max_epochs_number = 5

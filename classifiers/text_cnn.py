@@ -97,7 +97,8 @@ class TextCNNClassifier(BaseEstimator, ClassifierMixin):
             if self.base_estimator.verbose:
                 print('')
                 print('Training of TextCNN is finished...')
-                print('Best epoch of training is {0}.'.format(best_epoch + 1))
+                if best_epoch is not None:
+                    print('Best epoch of training is {0}.'.format(best_epoch + 1))
                 print('==========')
                 print('')
             if os.path.exists(tmp_cnn_name):
