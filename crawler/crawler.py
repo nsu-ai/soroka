@@ -5,6 +5,7 @@ from collections import OrderedDict
 from requests import get
 from typing import List
 from urllib.parse import urlsplit
+from multiprocessing import Pool
 
 from nltk import sent_tokenize
 
@@ -57,32 +58,34 @@ class Crawler:
             urls_depth_2 = self.get_links_on_page(html_soup, base_url=base_url, old_links=out.keys())
 
             if depth > 1:
-                for url_2 in urls_depth_2:
-                    html_soup = self.get_bs4_from_url(url_2)
+                # This should speed up x4 times for depth > 1
+                p = Pool(4)
+                html_texts = p.map(Crawler.get_html_str_from_url, urls_depth_2)
+                for kk, html_text in enumerate(html_texts):
+                    html_soup = BeautifulSoup(html_text, 'html.parser')
                     paragraphs = self.get_paragraphs(html_soup)
-                    out[url_2] = paragraphs
+                    out[urls_depth_2[kk]] = paragraphs
                     urls_depth_3 = self.get_links_on_page(html_soup, base_url=base_url, old_links=out.keys())
             if depth > 2:
-                for url_3 in urls_depth_3:
-                    html_soup = self.get_bs4_from_url(url_3)
+                html_texts = p.map(Crawler.get_html_str_from_url, urls_depth_3)
+                for kk, html_text in enumerate(html_texts):
+                    html_soup = BeautifulSoup(html_text, 'html.parser')
                     paragraphs = self.get_paragraphs(html_soup)
-                    out[url_3] = paragraphs
+                    out[urls_depth_3[kk]] = paragraphs
                     urls_depth_4 = self.get_links_on_page(html_soup, base_url=base_url, old_links=out.keys())
             if depth > 3:
-                for url_4 in urls_depth_4:
-                    html_soup = self.get_bs4_from_url(url_4)
+                html_texts = p.map(Crawler.get_html_str_from_url, urls_depth_3)
+                for kk, html_text in enumerate(html_texts):
+                    html_soup = BeautifulSoup(html_text, 'html.parser')
                     paragraphs = self.get_paragraphs(html_soup)
-                    out[url_4] = paragraphs
+                    out[urls_depth_4[kk]] = paragraphs
                     urls_depth_5 = self.get_links_on_page(html_soup, base_url=base_url, old_links=out.keys())
             if self.divide_by_sentences:
                 sentences = []
                 for cur_paragraph in out[url]:
                     sentences += sent_tokenize(cur_paragraph)
                 out[url] = copy.copy(sentences)
-        # for k, el in out.items():
-        #     print(k, '!!!')
-        #     for e in el:
-        #         print(e)
+
         return out
 
     @staticmethod
@@ -99,19 +102,8 @@ class Crawler:
         visible_texts = filter(tag_visible, texts)
         # return u" ".join(t.strip() for t in visible_texts)
         visible_texts = [v.strip() for v in visible_texts if len(v.strip()) > 10]
-        # for v in visible_texts:
-        #     print('++++++++++++++++++++++++')
-        #     print(v)
-        return list(visible_texts)
 
-    @staticmethod
-    def get_paragraphs_old(html_soup):
-        paragraphs = []
-        for p in html_soup.find_all('p'):
-            txt = p.getText().strip()
-            if txt:
-                paragraphs.append(txt)
-        return paragraphs
+        return list(visible_texts)
 
     @staticmethod
     def get_bs4_from_url(url):
@@ -125,6 +117,18 @@ class Crawler:
             html_text = ''
         html_soup = BeautifulSoup(html_text, 'html.parser')
         return html_soup
+
+    @staticmethod
+    def get_html_str_from_url(url):
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
+        }
+        try:
+            response = get(url, headers=headers)
+            html_text = response.text
+        except:
+            html_text = ''
+        return html_text
 
     @staticmethod
     def get_links_on_page(html_soup, base_url, old_links=[]):
@@ -144,4 +148,5 @@ class Crawler:
 if __name__ == '__main__':
     my_crawler = Crawler()
     res = my_crawler.load_and_tokenize(['https://academ.info'])
+    # res = my_crawler.load_and_tokenize(['http://zabaykin.ru'], depth=3)
     print(res)
