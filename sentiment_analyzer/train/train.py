@@ -1,22 +1,67 @@
+from argparse import ArgumentParser
 import csv
 import os
 import pickle
 from classifiers.cnn import CNNClassifier
+from classifiers.text_cnn import TextCNNClassifier
 from feature_extractors import EmbeddingExtractor
 
 
-def main(filename_for_training=os.path.join('data', 'train_data_for_se.csv'),
-         filename_for_testing=os.path.join('data', 'test_data_for_se.csv'),
-         delimiter=',', verbose=True, epochs_before_stopping=10, max_epochs_number=1000,
-         layers={'conv': ((32, (3, 0)), (64, (2, 0))), 'pool': ((2, 1), (2, 1)), 'dense': (100,)},
-         word2vec=os.path.join('data', 'word2vec_small.w2v'),
-         fe_output=os.path.join('data', 'senti_feature_extractor.pkl'),
-         cls_output=os.path.join('data', 'senti_cnn_classifier.pkl')):
+def parse_cnn_description(convolutional_layers_description: str, dense_layers_description: str) -> dict:
+    conv_layers = list()
+    pooling_layers = list()
+    for cur in convolutional_layers_description.split(';'):
+        err_msg = '"{0}" is a wrong description of convolutional layers!'.format(convolutional_layers_description)
+        assert len(cur) > 0, err_msg
+        parts_of_layer = cur.split('-')
+        assert len(parts_of_layer) == 2, err_msg
+        assert parts_of_layer[0].isdigit(), err_msg
+        assert parts_of_layer[1].isdigit(), err_msg
+        feature_maps_number = int(parts_of_layer[0])
+        filter_size = int(parts_of_layer[1])
+        assert (feature_maps_number > 0) and (filter_size > 1), err_msg
+        conv_layers.append((feature_maps_number, (filter_size,0)))
+        pooling_layers.append((2, 1))
+    dense_layers = list()
+    for cur in dense_layers_description.split(';'):
+        err_msg = '"{0}" is a wrong description of dense layers!'.format(dense_layers_description)
+        assert len(cur) > 0, err_msg
+        assert cur.isdigit(), err_msg
+        layer_size = int(cur)
+        assert layer_size > 1, err_msg
+        dense_layers.append(layer_size)
+    return {'conv': tuple(conv_layers), 'pool': tuple(pooling_layers), 'dense': tuple(dense_layers)}
+
+
+def main():
+    parser = ArgumentParser()
+    parser.add_argument('-t', '--train', dest='trainining_set_name', type=str, required=True,
+                        help='Name of CSV file with data for training.')
+    parser.add_argument('-e', '--est', dest='estimation_set_name', type=str, required=True,
+                        help='Name of CSV file with data for estimation.')
+    parser.add_argument('-c', '--conv', dest='convolutional_layers', type=str, required=False,
+                        default='32-4;64-3;128-2', help='Description of CNN\'s convolutional layers.')
+    parser.add_argument('-d', '--dense', dest='dense_layers', type=str, required=False, default='256;128')
+    args = parser.parse_args()
+
+    filename_for_training = os.path.normpath(args.trainining_set_name)
+    assert os.path.isfile(filename_for_training), 'File "{0}" does not exist!'.format(filename_for_training)
+    filename_for_testing = os.path.normpath(args.estimation_set_name)
+    assert os.path.isfile(filename_for_testing), 'File "{0}" does not exist!'.format(filename_for_testing)
+
+    cnn_structure = parse_cnn_description(args.convolutional_layers, args.dense_layers)
+    epochs_before_stopping = 5
+    max_epochs_number = 200
+    word2vec_name = os.path.join('data', 'word2vec_small.w2v')
+    assert os.path.isfile(word2vec_name), 'File "{0}" does not exists!'.format(word2vec_name)
+    cls_name = os.path.join('data', 'senti_cnn_classifier.pkl')
+    cls_dir = os.path.dirname(cls_name)
+    assert os.path.isdir(cls_dir), 'Directory "{0}" does not exists!'.format(cls_dir)
 
     X_train = list()
     y_train = list()
     with open(filename_for_training, 'r', encoding='utf-8') as f:
-        reader=csv.reader(f, delimiter=delimiter, quotechar='"')
+        reader=csv.reader(f, delimiter=',', quotechar='"')
         for line_counter, row in enumerate(reader):
             if len(row) != 2:
                 raise ValueError("Row must contain 2 values, but "
@@ -31,7 +76,7 @@ def main(filename_for_training=os.path.join('data', 'train_data_for_se.csv'),
     X_test = list()
     y_test = list()
     with open(filename_for_testing, 'r', encoding='utf-8') as f:
-        reader = csv.reader(f, delimiter=delimiter, quotechar='"')
+        reader = csv.reader(f, delimiter=',', quotechar='"')
         for line_counter, row in enumerate(reader):
             if len(row) != 2:
                 raise ValueError("Row must contain 2 values, but "
@@ -44,26 +89,13 @@ def main(filename_for_training=os.path.join('data', 'train_data_for_se.csv'),
             X_test.append(row[0])
             y_test.append(int(row[1]) + 1)
 
-    emb = EmbeddingExtractor(word2vec_name=word2vec)
-    emb.fit(X_train + X_test)
-    print('Feature extractor has been fitted...')
-    with open(fe_output, 'wb') as f:
-        pickle.dump(emb, f)
-    X_train_transformed = emb.transform(X_train)
-    print('Data for training have been prepared...')
-    X_test_transformed = emb.transform(X_test)
-    print('Data for testing have been prepared...')
-    print('')
-
-    clf = CNNClassifier(verbose=verbose, epochs_before_stopping=epochs_before_stopping,
-                        max_epochs_number=max_epochs_number, layers=layers, eval_metric='F1').fit(
-        X_train_transformed, y_train,
-        validation=(X_test_transformed, y_test)
-    )
-    print('')
-    print('Convolutional neural network has been trained...')
-    with open(cls_output, 'wb') as f:
-        pickle.dump(clf, f)
+    emb = EmbeddingExtractor(word2vec_name=word2vec_name)
+    cls = CNNClassifier(layers=cnn_structure, max_epochs_number=max_epochs_number,
+                        epochs_before_stopping=epochs_before_stopping, verbose=True, eval_metric='F1')
+    text_cnn = TextCNNClassifier(feature_extractor=emb, base_estimator=cls, batch_size=2000)
+    text_cnn.fit(X_train, y_train, validation=(X_test, y_test))
+    with open(cls_name, 'wb') as fp:
+        pickle.dump(text_cnn, fp)
 
 
 if __name__ == '__main__':
