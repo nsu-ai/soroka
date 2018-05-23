@@ -38,6 +38,11 @@ class TextCNNClassifier(BaseEstimator, ClassifierMixin):
             y_val = None
         self._check_params()
         self.feature_extractor.fit(X)
+        if self.base_estimator.verbose:
+            print('')
+            print('Feature extractor has been fitted...')
+            print('Caclulated sentence length is {0}.'.format(self.feature_extractor.max_sentence_length_))
+            print('')
         n_batches = len(X) // self.batch_size
         while (n_batches * self.batch_size) < len(X):
             n_batches += 1

@@ -2,6 +2,8 @@ from argparse import ArgumentParser
 import csv
 import os
 import pickle
+import sys
+
 from classifiers.cnn import CNNClassifier
 from classifiers.text_cnn import TextCNNClassifier
 from feature_extractors import EmbeddingExtractor
@@ -21,7 +23,7 @@ def parse_cnn_description(convolutional_layers_description: str, dense_layers_de
         filter_size = int(parts_of_layer[1])
         assert (feature_maps_number > 0) and (filter_size > 1), err_msg
         conv_layers.append((feature_maps_number, (filter_size,0)))
-        pooling_layers.append((2, 1))
+        pooling_layers.append((3, 1))
     dense_layers = list()
     for cur in dense_layers_description.split(';'):
         err_msg = '"{0}" is a wrong description of dense layers!'.format(dense_layers_description)
@@ -58,8 +60,22 @@ def main():
     cls_dir = os.path.dirname(cls_name)
     assert os.path.isdir(cls_dir), 'Directory "{0}" does not exists!'.format(cls_dir)
 
+    maxInt = sys.maxsize
+    decrement = True
+
+    while decrement:
+        decrement = False
+        try:
+            csv.field_size_limit(maxInt)
+        except OverflowError:
+            maxInt = int(maxInt / 10)
+            decrement = True
+
     X_train = list()
     y_train = list()
+    n_positives = 0
+    n_negatives = 0
+    n_neutrals = 0
     with open(filename_for_training, 'r', encoding='utf-8') as f:
         reader=csv.reader(f, delimiter=',', quotechar='"')
         for line_counter, row in enumerate(reader):
@@ -73,6 +89,20 @@ def main():
                         label=row[1]))
             X_train.append(row[0])
             y_train.append(int(row[1]) + 1)
+            if row[1] == '1':
+                n_positives += 1
+            elif row[1] == '-1':
+                n_negatives += 1
+            else:
+                n_neutrals += 1
+    print('Data for training have been successfully loaded...')
+    print('Number of positive texts is {0}.'.format(n_positives))
+    print('Number of negative texts is {0}.'.format(n_negatives))
+    print('Number of neutrals texts is {0}.'.format(n_neutrals))
+    print('')
+    n_positives = 0
+    n_negatives = 0
+    n_neutrals = 0
     X_test = list()
     y_test = list()
     with open(filename_for_testing, 'r', encoding='utf-8') as f:
@@ -88,10 +118,21 @@ def main():
                                                                        label=row[1]))
             X_test.append(row[0])
             y_test.append(int(row[1]) + 1)
+            if row[1] == '1':
+                n_positives += 1
+            elif row[1] == '-1':
+                n_negatives += 1
+            else:
+                n_neutrals += 1
+    print('Data for estimation have been successfully loaded...')
+    print('Number of positive texts is {0}.'.format(n_positives))
+    print('Number of negative texts is {0}.'.format(n_negatives))
+    print('Number of neutrals texts is {0}.'.format(n_neutrals))
+    print('')
 
     emb = EmbeddingExtractor(word2vec_name=word2vec_name)
     cls = CNNClassifier(layers=cnn_structure, max_epochs_number=max_epochs_number,
-                        epochs_before_stopping=epochs_before_stopping, verbose=True, eval_metric='F1')
+                        epochs_before_stopping=epochs_before_stopping, verbose=True, eval_metric='F1', batch_size=50)
     text_cnn = TextCNNClassifier(feature_extractor=emb, base_estimator=cls, batch_size=2000)
     text_cnn.fit(X_train, y_train, validation=(X_test, y_test))
     with open(cls_name, 'wb') as fp:
