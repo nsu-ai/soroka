@@ -27,7 +27,7 @@ if __name__ == '__main__':
     for it in sorted(urls):
         print('  {0}'.format(it))
     print('')
-    crawler = Crawler(divide_by_sentences=True)
+    crawler = Crawler(divide_by_sentences=use_spacy_for_sentiment_analysis)
     full_content = crawler.load_and_tokenize(urls, depth=3)
     if len(full_content) == 0:
         print('По заданным веб-ссылкам ничего не написано :-(')
@@ -49,13 +49,10 @@ if __name__ == '__main__':
                 import os
                 import pickle
                 from sentiment_analyzer.sentiment_analyzer import SentimentAnalyzer
-                fe_name = os.path.join('data', 'senti_feature_extractor.pkl')
                 cls_name = os.path.join('data', 'senti_cnn_classifier.pkl')
-                with open(fe_name, 'rb') as fe_fp:
-                    fe = pickle.load(fe_fp)
                 with open(cls_name, 'rb') as cls_fp:
                     cls = pickle.load(cls_fp)
-                se = SentimentAnalyzer(feature_extractor=fe, classifier=cls)
+                se = SentimentAnalyzer(cls=cls)
                 print('')
             print('Сорока оценивает эмоциональность этих упоминаний...')
             print('')
