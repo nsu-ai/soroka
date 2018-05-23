@@ -3,22 +3,14 @@ import numpy as np
 from collections import OrderedDict
 from typing import Tuple
 
+from classifiers import TextCNNClassifier
+
 
 class SentimentAnalyzer(object):
     """ Анализатор тональности текстового контента.
     """
-    def __init__(self, feature_extractor, classifier):
-        if not hasattr(classifier, 'fit') or not hasattr(classifier, 'predict'):
-            raise TypeError("classifier {classifier} must have fit and predict" 
-                "methods".format(classifier = classifier))
-        
-        if not hasattr(feature_extractor, 'transform'):
-            raise TypeError("feature_extractor {feature_extractor} must" 
-                    "have a transform method".format(feature_extractor = feature_extractor))
-        
-        self.classifier = classifier
-        self.feature_extractor = feature_extractor
-        
+    def __init__(self, cls: TextCNNClassifier):
+        self.cls = cls
     
     def analyze(self, web_content: OrderedDict) -> Tuple[int, int, int]:
         """ Проанализировать тональность абзацев заданного веб-контента. Сам веб-контент представляет собой словарь,
@@ -42,12 +34,13 @@ class SentimentAnalyzer(object):
         :param web_content: словарь текстового контента, разбитого на абзацы, для всех обойдённых URL-ов
         :return Число позитивных высказываний, число негативных высказываний и общее число высказываний.
         """
-
+        if not isinstance(self.cls, TextCNNClassifier):
+            raise ValueError('`cls` is wrong! Expected a `classifiers.text_cnn.TextCNNClassifier`, '
+                             'but got a `{0}.`'.format(type(self.cls)))
         if not isinstance(web_content, OrderedDict):
             raise TypeError("web_content must be an OrderedDict,"
                             " but it is a {type}".format(type = type(web_content)))
-        X_preprocessed = self.feature_extractor.transform(sum([web_content[key] for key in web_content], []))
-        output = self.classifier.predict(X_preprocessed)
+        output = self.cls.predict(sum([web_content[key] for key in web_content], []))
         positives = int(sum(output == 2))
         neutrals = int(sum(output == 1))
         negatives = int(sum(output == 0))
@@ -55,10 +48,8 @@ class SentimentAnalyzer(object):
         return (negatives, neutrals, positives)
     
     def __getstate__(self):
-        return {'classifier': self.classifier, 'feature_extractor': self.feature_extractor}
+        return {'cls': self.cls}
     
     def __setstate__(self, state):
-        self.classifier = state['classifier']
-        self.feature_extractor = state['feature_extractor']
+        self.cls = state['cls']
         return self
-        
