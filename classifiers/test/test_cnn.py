@@ -847,10 +847,13 @@ class TestCNNClassifier(unittest.TestCase):
                                          random_state=self.random_state))
         ])
         X_train, y_train, X_test, y_test = self.load_digits()
-        cls.fit(X_train, y_train)
+        X_train1, X_train2, y_train1, y_train2 = train_test_split(X_train, y_train)
+        cls.fit(X_train1, y_train1)
         X_test = X_test[y_test < 5]
         y_test = y_test[y_test < 5]
-        cls.fit_transform(X_train2, y_train2)
+        cls.fit_transfer(X_train2, y_train2)
+        y_pred = cls.predict(X_test, y_test)
+        self.assertLess(max(y_pred), 5)
         
     def test_fit_transfer_negative01(self):
         layers = {'conv': ((32, (3, 3)), (64, (2, 2))), 'pool': ((2, 2), (2, 2)), 'dense': (100, 80)}
