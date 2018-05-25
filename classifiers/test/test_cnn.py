@@ -13,6 +13,8 @@ from sklearn.utils.validation import check_random_state
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
+from sklearn.model_selection import train_test_split
+from sklearn.exceptions import NotFittedError
 
 from classifiers.cnn import CNNClassifier
 from classifiers.utils import split_train_data
@@ -834,7 +836,39 @@ class TestCNNClassifier(unittest.TestCase):
         true_err_msg = re.escape('`X` must be 4D array (samples, input maps, rows of input map, columns of input map)!')
         with self.assertRaisesRegex(ValueError, true_err_msg):
             _ = cls.predict(X_test)
-
+            
+    def test_fit_transfer_positive01(self):
+        layers = {'conv': ((32, (3, 3)), (64, (2, 2))), 'pool': ((2, 2), (2, 2)), 'dense': (100, 80)}
+        cls = Pipeline(steps=[
+            ('normalizer', DigitsScaler()),
+            ('reshaper', DigitsPreprocessor()),
+            ('classifier', CNNClassifier(layers=layers, verbose=True, max_epochs_number=100, epochs_before_stopping=10,
+                                         validation_fraction=0.2, batch_size=100, learning_rate=2e-3,
+                                         random_state=self.random_state))
+        ])
+        X_train, y_train, X_test, y_test = self.load_digits()
+        X_train1, X_train2, y_train1, y_train2 = train_test_split(X_train, y_train)
+        cls.fit(X_train1, y_train1)
+        X_test = X_test[y_test < 5]
+        y_test = y_test[y_test < 5]
+        cls.fit_transfer(X_train2, y_train2)
+        y_pred = cls.predict(X_test, y_test)
+        self.assertLess(max(y_pred), 5)
+        
+    def test_fit_transfer_negative01(self):
+        layers = {'conv': ((32, (3, 3)), (64, (2, 2))), 'pool': ((2, 2), (2, 2)), 'dense': (100, 80)}
+        cls = Pipeline(steps=[
+            ('normalizer', DigitsScaler()),
+            ('reshaper', DigitsPreprocessor()),
+            ('classifier', CNNClassifier(layers=layers, verbose=True, max_epochs_number=100, epochs_before_stopping=10,
+                                         validation_fraction=0.2, batch_size=100, learning_rate=2e-3,
+                                         random_state=self.random_state))
+        ])
+        X_train, y_train, X_test, y_test = self.load_digits()
+        with self.assertRaises(NotFittedError):
+            cls.fit_transfer(X_train, y_train)
+        
+        
     def test_pickling_unpickling_positive01(self):
         """ Проверить сериализацию свёрточной сети в бинарный файл и десериализацию её оттуда средствами pickle. """
         X_train, y_train, X_test, y_test = self.load_digits()

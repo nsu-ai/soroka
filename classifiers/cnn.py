@@ -167,7 +167,193 @@ class CNNClassifier(BaseEstimator, ClassifierMixin):
                 (not hasattr(self, 'predict_fn_')) or (not hasattr(self, 'cnn_')):
             cnn_input_var = T.tensor4('inputs')
             target_var = T.ivector('targets')
-            self.cnn_, _ = self.build_cnn(input_structure, len(classes_list), cnn_input_var)
+            self.cnn_, self.cnn_but_last_ = self.build_cnn(input_structure, len(classes_list), cnn_input_var)
+            train_loss, _ = self.build_loss(len(classes_list), target_var, self.cnn_, False)
+            params = lasagne.layers.get_all_params(self.cnn_, trainable=True)
+            updates = lasagne.updates.adamax(train_loss, params, learning_rate=self.learning_rate, beta1=self.beta1,
+                                             beta2=self.beta2, epsilon=self.epsilon)
+            self.cnn_train_fn_ = theano.function([cnn_input_var, target_var], train_loss, updates=updates,
+                                                 allow_input_downcast=True)
+            test_loss, test_prediction = self.build_loss(len(classes_list), target_var, self.cnn_, True)
+            self.cnn_val_fn_ = theano.function([cnn_input_var, target_var], test_loss, allow_input_downcast=True)
+            self.predict_fn_ = theano.function([cnn_input_var], test_prediction, allow_input_downcast=True)
+        if old_params is not None:
+            lasagne.layers.set_all_param_values(self.cnn_, old_params)
+        if 'validation' in fit_params:
+            if (not isinstance(fit_params['validation'], tuple)) and (not isinstance(fit_params['validation'], list)):
+                raise ValueError('Validation data are specified incorrectly!')
+            if len(fit_params['validation']) != 2:
+                raise ValueError('Validation data are specified incorrectly!')
+            X_val, y_val = self.check_train_data(fit_params['validation'][0], fit_params['validation'][1])
+            if X.shape[1:] != X_val.shape[1:]:
+                raise ValueError('Validation inputs do not correspond to train inputs!')
+            if set(y.tolist()) != set(y_val.tolist()):
+                raise ValueError('Validation targets do not correspond to train targets!')
+            train_indices = numpy.arange(0, X.shape[0], 1, numpy.int32)
+            val_indices = numpy.arange(0, X_val.shape[0], 1, numpy.int32)
+        elif self.validation_fraction is not None:
+            n = int(round(self.validation_fraction * X.shape[0]))
+            if (n <= 0) or (n >= X.shape[0]):
+                raise ValueError('Train data cannot be split into train and validation subsets!')
+            X_val = None
+            y_val = None
+            train_indices, val_indices = split_train_data(y, n, self.random_state)
+        else:
+            X_val = None
+            y_val = None
+            train_indices = numpy.arange(0, X.shape[0], 1, numpy.int32)
+            val_indices = None
+        if self.verbose:
+            print("")
+            print("Training is started...")
+        best_eval_metric = None
+        cur_eval_metric = None
+        best_params = None
+        best_epoch_ind = None
+        early_stopping = False
+        for epoch_ind in range(self.max_epochs_number):
+            train_err = 0
+            start_time = time.time()
+            for batch in self.__iterate_minibatches(X, y, train_indices, shuffle=True):
+                inputs, targets = batch
+                train_err += self.cnn_train_fn_(inputs, targets)
+            train_err /= train_indices.shape[0]
+            val_err = 0.0
+            if val_indices is None:
+                if best_eval_metric is None:
+                    best_epoch_ind = epoch_ind
+                    best_eval_metric = train_err
+                    best_params = lasagne.layers.get_all_param_values(self.cnn_)
+                elif train_err < best_eval_metric:
+                    best_epoch_ind = epoch_ind
+                    best_eval_metric = train_err
+                    best_params = lasagne.layers.get_all_param_values(self.cnn_)
+            else:
+                val_err = 0
+                if X_val is None:
+                    for batch in self.__iterate_minibatches(X, y, val_indices, shuffle=False):
+                        inputs, targets = batch
+                        val_err += self.cnn_val_fn_(inputs, targets)
+                else:
+                    for batch in self.__iterate_minibatches(X_val, y_val, val_indices, shuffle=False):
+                        inputs, targets = batch
+                        val_err += self.cnn_val_fn_(inputs, targets)
+                val_err /= val_indices.shape[0]
+                if self.eval_metric == 'Logloss':
+                    cur_eval_metric = val_err
+                    if best_eval_metric is None:
+                        best_epoch_ind = epoch_ind
+                        best_eval_metric = cur_eval_metric
+                        best_params = lasagne.layers.get_all_param_values(self.cnn_)
+                    elif cur_eval_metric < best_eval_metric:
+                        best_epoch_ind = epoch_ind
+                        best_eval_metric = cur_eval_metric
+                        best_params = lasagne.layers.get_all_param_values(self.cnn_)
+                else:
+                    if self.eval_metric == 'F1':
+                        if X_val is None:
+                            cur_eval_metric = f1_score(
+                                y[val_indices],
+                                self.__predict(X[val_indices], len(classes_list)),
+                                average=('binary' if len(classes_list) < 3 else 'macro')
+                            )
+                        else:
+                            cur_eval_metric = f1_score(
+                                y_val,
+                                self.__predict(X_val, len(classes_list)),
+                                average=('binary' if len(classes_list) < 3 else 'macro')
+                            )
+                    else:
+                        if X_val is None:
+                            cur_eval_metric = roc_auc_score(
+                                y[val_indices],
+                                self.__predict_proba(X[val_indices], len(classes_list))[:, 1]
+                            )
+                        else:
+                            cur_eval_metric = roc_auc_score(
+                                y_val,
+                                self.__predict_proba(X_val, len(classes_list))[:, 1]
+                            )
+                    if best_eval_metric is None:
+                        best_epoch_ind = epoch_ind
+                        best_eval_metric = cur_eval_metric
+                        best_params = lasagne.layers.get_all_param_values(self.cnn_)
+                    elif cur_eval_metric > best_eval_metric:
+                        best_epoch_ind = epoch_ind
+                        best_eval_metric = cur_eval_metric
+                        best_params = lasagne.layers.get_all_param_values(self.cnn_)
+            if self.verbose:
+                print("Epoch {} of {} took {:.3f}s".format(
+                    epoch_ind + 1, self.max_epochs_number, time.time() - start_time))
+                print("  training loss:\t\t{:.6f}".format(train_err))
+                if val_indices is not None:
+                    print("  validation loss:\t\t{:.6f}".format(val_err))
+                    if self.eval_metric != 'Logloss':
+                        print("  validation {}:\t\t{:.6f}".format(self.eval_metric, cur_eval_metric))
+            if best_epoch_ind is not None:
+                if (epoch_ind - best_epoch_ind) >= self.epochs_before_stopping:
+                    early_stopping = True
+                    break
+        if best_params is None:
+            raise ValueError('The multilayer perceptron cannot be trained!')
+        self.loss_value_ = best_eval_metric
+        if self.warm_start:
+            self.n_iter_ += (best_epoch_ind + 1)
+        else:
+            self.n_iter_ = best_epoch_ind + 1
+        lasagne.layers.set_all_param_values(self.cnn_, best_params)
+        del best_params
+        self.input_size_ = input_structure
+        if self.verbose:
+            if early_stopping:
+                print('Training is stopped according to the early stopping criterion.')
+            else:
+                print('Training is stopped according to the exceeding of maximal epochs number.')
+        self.classes_list_ = classes_list
+        return self
+
+    def fit_transfer(self, X, y, **fit_params):
+        """ Дообучить уже обученную свёрточную нейросеть на заданном множестве примеров: входных примеров X и соответствующих меток y.
+        При обучении удаляется последний (полносвязный) слой, веса его связей с предыдущим, скрытым, слоем забываются.
+        Добавляется новый полносвязный слой со случайно инициализированными весовыми коэффициентами.
+        
+        В процессе обучения, чтобы применить критерий раннего останова, можно задать контрольное (валидационное)
+        множество, на котором будет вычисляться ошибка обобщения. Это можно сделать с использованием необязательного
+        аргумента validation. Если этот аргумент указан, то он должен представлять собой двухэлементый кортеж или
+        список, первым элементом которого является множество входных примеров X_val, а вторым элементов - множество
+        меток классов y_val. X_val, как и множество обучающих примеров X, должно быть 4-мерным numpy.ndarray-массивом,
+        а y_val, как и y, должно быть 1-мерным numpy.ndarray-массивом меток классов.
+
+        Первое измерение массивов X и X_val - это число примеров. Соответственно, первое измерение X должно быть равно
+        первому (и единственному) измерению y, а первое измерение X_val - первому (и единственному) измерению y_val.
+
+        Если необязательный аргумент validation не указан, то контрольное (валидационное) множество автоматически
+        случайным образом отшипывается от обучающего множества в пропорции, заданной параметром validation_fraction.
+        Если же и необязательный аргумент validation не указан, и параметр validation_fraction установлен в None, то
+        критерий раннего останова не используется.
+
+        :param X: 4-мерный numpy.ndarray-массив (1-е измерение - обучающие примеры, а остальные - размеры примера).
+        :param y: 1-мерный numpy.ndarray-массив меток классов для каждого примера (метка - это целое неотрицательное).
+        :param validation: Необязательный параметр, задающий контрольное (валидационное) множество для early stopping.
+
+        :return self.
+
+        """
+        self.check_params(**self.get_params(deep=False))
+        X, y = self.check_train_data(X, y)
+        input_structure = X.shape[1:]
+        self.random_state = check_random_state(self.random_state)
+        classes_list = sorted(list(set(y.tolist())))
+        check_is_fitted(self, ['cnn_', 'predict_fn_', 'n_iter_', 'input_size_', 'loss_value_', 'classes_list_'])
+        old_params = lasagne.layers.get_all_param_values(self.cnn_)
+        if (len(classes_list) > 2) and (self.eval_metric == 'ROC-AUC'):
+            raise ValueError('You can not use `ROC-AUC` metric for early stopping '
+                             'if number of classes is greater than 2.')
+        if (not hasattr(self, 'cnn_train_fn_')) or (not hasattr(self, 'cnn_val_fn_')) or \
+                (not hasattr(self, 'predict_fn_')) or (not hasattr(self, 'cnn_')):
+            cnn_input_var = T.tensor4('inputs')
+            target_var = T.ivector('targets')
+            self.cnn_ = lasagne.layers.DenseLayer(self.cnn_but_last_, num_units = len(classes_list))
             train_loss, _ = self.build_loss(len(classes_list), target_var, self.cnn_, False)
             params = lasagne.layers.get_all_params(self.cnn_, trainable=True)
             updates = lasagne.updates.adamax(train_loss, params, learning_rate=self.learning_rate, beta1=self.beta1,
